@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Separation of Substances - Virtual AI Labs</title>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <button class="back-btn" onclick="goBack()">
+            <span>←</span> Back
+        </button>
+        <div class="experiment-title">
+            <span class="icon"></span>
+            <span>Separation of Substances</span>
+        </div>
+        <div class="formula-display">E = E<sub>m</sub> + E<sub>d</sub> + E<sub>f</sub> + E<sub>e</sub></div>
+    </div>
+
+    <!-- Main Experiment Container -->
+    <div class="experiment-container">
+        <!-- 60% Simulation Panel -->
+        <div class="simulation-panel">
+            <canvas id="simulation-canvas"></canvas>
+            <div class="canvas-controls">
+                 Drag to rotate • Scroll to zoom • Shift+drag to pan
+            </div>
+            
+            <!-- Separation Controls Overlay -->
+            <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(10, 14, 26, 0.9); 
+                        backdrop-filter: blur(10px); padding: 1rem; border-radius: 0.5rem; 
+                        border: 1px solid var(--cyan); min-width: 250px;">
+                <h4 style="color: var(--cyan); margin-bottom: 0.75rem;">Separation Steps</h4>
+                
+                <!-- Status Display -->
+                <div id="separation-status" style="background: rgba(0, 255, 255, 0.1); padding: 0.75rem; 
+                     border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.85rem; min-height: 60px;">
+                    <div style="color: var(--text-secondary);">Ready to start separation...</div>
+                    <div id="status-iron" style="color: var(--text-primary); margin-top: 0.25rem; display: none;">
+                         Iron: <span id="iron-amount">0</span>g collected
+                    </div>
+                    <div id="status-salt" style="color: var(--text-primary); margin-top: 0.25rem; display: none;">
+                         Salt: <span id="salt-amount">0</span>g dissolved
+                    </div>
+                    <div id="status-sand" style="color: var(--text-primary); margin-top: 0.25rem; display: none;">
+                         Sand: <span id="sand-amount">0</span>g filtered
+                    </div>
+                    <div id="status-recovered" style="color: var(--cyan); margin-top: 0.5rem; font-weight: bold; display: none;">
+                         Salt Recovered: <span id="recovered-amount">0</span>g
+                    </div>
+                </div>
+                
+                <button class="btn-primary" onclick="startMagneticSeparation()" id="btn-magnetic"
+                        style="width: 100%; padding: 0.5rem; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                     1. Magnetic Separation
+                </button>
+                <button class="btn-primary" onclick="startDissolution()" id="btn-dissolution" disabled
+                        style="width: 100%; padding: 0.5rem; font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.5;">
+                     2. Add Water & Dissolve
+                </button>
+                <button class="btn-primary" onclick="startFiltration()" id="btn-filtration" disabled
+                        style="width: 100%; padding: 0.5rem; font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.5;">
+                     3. Filter Sand
+                </button>
+                <button class="btn-primary" onclick="startEvaporation()" id="btn-evaporation" disabled
+                        style="width: 100%; padding: 0.5rem; font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.5;">
+                     4. Evaporate Water
+                </button>
+                <button class="btn-secondary" onclick="resetExperiment()" 
+                        style="width: 100%; padding: 0.5rem; font-size: 0.9rem;">
+                    🔄 Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- 40% Theory/Control Panel -->
+        <div class="theory-panel" id="theory-panel">
+            <!-- Initial Theory View -->
+            <div id="theory-view" class="theory-content">
+                <div class="section-title">
+                     What is this Experiment?
+                </div>
+                <div class="section-content">
+                    This experiment demonstrates how different physical and chemical properties such as 
+                    <strong>magnetism, solubility, and particle size</strong> can be used to separate 
+                    components of a mixture. By applying multiple separation techniques step by step, 
+                    students observe how real-world inefficiencies affect the purity and recovery of substances.
+                    <br><br>
+                    We'll separate a mixture of <strong>iron filings, sand, and salt</strong> using:
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li> Magnetic separation (iron)</li>
+                        <li> Dissolution (salt in water)</li>
+                        <li> Filtration (sand)</li>
+                        <li> Evaporation (salt recovery)</li>
+                    </ul>
+                </div>
+
+                <div class="section-title">
+                     Efficiency Model
+                </div>
+                <div class="formula-box">
+                    <div class="formula-equation">E = E<sub>m</sub> + E<sub>d</sub> + E<sub>f</sub> + E<sub>e</sub></div>
+                    <div style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                        Overall Separation Efficiency = Sum of individual method efficiencies
+                    </div>
+                </div>
+
+                <div class="section-title">
+                     Formula Parameters
+                </div>
+                <div class="formula-params">
+                    <div class="param-item">
+                        <div class="param-symbol">Magnetic Strength</div>
+                        <div class="param-name">Determines force applied to iron filings</div>
+                        <div class="param-unit">Unit: Tesla (T)</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-symbol">Solvent Volume</div>
+                        <div class="param-name">Limits maximum salt dissolution</div>
+                        <div class="param-unit">Unit: milliliters (mL)</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-symbol">Evaporation Rate</div>
+                        <div class="param-name">Controls salt recovery speed</div>
+                        <div class="param-unit">Unit: mL/min</div>
+                    </div>
+                </div>
+
+                <div class="section-title">
+                     Key Insight
+                </div>
+                <div class="section-content">
+                    Each separation method has an <strong>ideal efficiency</strong> based on the formula parameters, 
+                    but <strong>real-world factors</strong> like particle size, impurities, and human error 
+                    reduce the actual recovery. This teaches students the difference between theoretical and 
+                    practical chemistry!
+                </div>
+
+                <div class="section-title">
+                     Real-Life Factors (Not in Formula)
+                </div>
+                <div class="section-content">
+                    While the ideal formula considers only separation method parameters, real separation is affected by:
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Particle size - smaller particles harder to separate</li>
+                        <li>Stirring speed - affects dissolution rate</li>
+                        <li>Temperature - affects solubility</li>
+                        <li>Filter pore size - controls filtration loss</li>
+                        <li>Impurity percentage - reduces purity</li>
+                        <li>Separation time - limits completeness</li>
+                        <li>Manual efficiency - human error/loss</li>
+                    </ul>
+                </div>
+
+                <div class="funfact-box">
+                    <h3> Fun Fact</h3>
+                    The same separation principles used in this experiment are applied in real industries 
+                    such as <strong>mineral processing, water purification, and recycling plants</strong>. 
+                    Large-scale mining operations use magnetic separation to extract iron ore, and 
+                    desalination plants use similar evaporation techniques to get fresh water from seawater!
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-primary" onclick="showFormulaMode()">
+                         Play with Formula
+                    </button>
+                    <button class="btn-secondary" onclick="showAIMode()">
+                         Play with AI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formula Mode View -->
+            <div id="formula-view" class="theory-content" style="display: none;">
+                <button class="back-btn" onclick="showTheory()" style="margin-bottom: 1rem;">
+                    ← Back to Theory
+                </button>
+
+                <div class="section-title">
+                     Adjusting Formula
+                </div>
+
+                <div class="sliders-container" id="formula-sliders">
+                    <!-- Formula Parameters -->
+                    <div class="slider-group formula-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge formula">FORMULA</span>
+                                <span>Magnetic Strength (T)</span>
+                            </div>
+                            <span class="slider-value" id="magnetic-value">0.50</span>
+                        </div>
+                        <input type="range" class="slider" id="magnetic-slider" 
+                               min="0.1" max="2" step="0.01" value="0.5" 
+                               oninput="updateSlider('magnetic', this.value)">
+                        <div class="slider-range">
+                            <span>0.1</span>
+                            <span>2.0</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group formula-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge formula">FORMULA</span>
+                                <span>Solvent Volume (mL)</span>
+                            </div>
+                            <span class="slider-value" id="solvent-value">100.00</span>
+                        </div>
+                        <input type="range" class="slider" id="solvent-slider" 
+                               min="10" max="500" step="1" value="100" 
+                               oninput="updateSlider('solvent', this.value)">
+                        <div class="slider-range">
+                            <span>10</span>
+                            <span>500</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group formula-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge formula">FORMULA</span>
+                                <span>Evaporation Rate (mL/min)</span>
+                            </div>
+                            <span class="slider-value" id="evaporation-value">5.00</span>
+                        </div>
+                        <input type="range" class="slider" id="evaporation-slider" 
+                               min="1" max="20" step="0.1" value="5" 
+                               oninput="updateSlider('evaporation', this.value)">
+                        <div class="slider-range">
+                            <span>1</span>
+                            <span>20</span>
+                        </div>
+                    </div>
+
+                    <!-- Real-Life Parameters -->
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Particle Size (µm)</span>
+                            </div>
+                            <span class="slider-value" id="particlesize-value">100.00</span>
+                        </div>
+                        <input type="range" class="slider" id="particlesize-slider" 
+                               min="10" max="1000" step="10" value="100" 
+                               oninput="updateSlider('particlesize', this.value)">
+                        <div class="slider-range">
+                            <span>10</span>
+                            <span>1000</span>
+                        </div>
+                        <div class="param-description">
+                             Notice: Only formula parameters affect the calculated result. Real-life factors affect simulation visually but the formula remains ideal.
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Stirring Speed (RPM)</span>
+                            </div>
+                            <span class="slider-value" id="stirring-value">300.00</span>
+                        </div>
+                        <input type="range" class="slider" id="stirring-slider" 
+                               min="0" max="1000" step="10" value="300" 
+                               oninput="updateSlider('stirring', this.value)">
+                        <div class="slider-range">
+                            <span>0</span>
+                            <span>1000</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Temperature (°C)</span>
+                            </div>
+                            <span class="slider-value" id="temperature-value">25.00</span>
+                        </div>
+                        <input type="range" class="slider" id="temperature-slider" 
+                               min="0" max="100" step="1" value="25" 
+                               oninput="updateSlider('temperature', this.value)">
+                        <div class="slider-range">
+                            <span>0</span>
+                            <span>100</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Filter Pore Size (µm)</span>
+                            </div>
+                            <span class="slider-value" id="filterpore-value">50.00</span>
+                        </div>
+                        <input type="range" class="slider" id="filterpore-slider" 
+                               min="5" max="500" step="5" value="50" 
+                               oninput="updateSlider('filterpore', this.value)">
+                        <div class="slider-range">
+                            <span>5</span>
+                            <span>500</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Impurity Percentage (%)</span>
+                            </div>
+                            <span class="slider-value" id="impurity-value">5.00</span>
+                        </div>
+                        <input type="range" class="slider" id="impurity-slider" 
+                               min="0" max="50" step="1" value="5" 
+                               oninput="updateSlider('impurity', this.value)">
+                        <div class="slider-range">
+                            <span>0</span>
+                            <span>50</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Separation Time (s)</span>
+                            </div>
+                            <span class="slider-value" id="septime-value">60.00</span>
+                        </div>
+                        <input type="range" class="slider" id="septime-slider" 
+                               min="10" max="300" step="5" value="60" 
+                               oninput="updateSlider('septime', this.value)">
+                        <div class="slider-range">
+                            <span>10</span>
+                            <span>300</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Manual Efficiency (%)</span>
+                            </div>
+                            <span class="slider-value" id="manual-value">90.00</span>
+                        </div>
+                        <input type="range" class="slider" id="manual-slider" 
+                               min="50" max="100" step="1" value="90" 
+                               oninput="updateSlider('manual', this.value)">
+                        <div class="slider-range">
+                            <span>50</span>
+                            <span>100</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="simulateFormula()" style="margin-top: 2rem;">
+                     Calculate Efficiency
+                </button>
+            </div>
+
+            <!-- AI Mode View -->
+            <div id="ai-view" class="theory-content" style="display: none;">
+                <button class="back-btn" onclick="showTheory()" style="margin-bottom: 1rem;">
+                    ← Back to Theory
+                </button>
+
+                <div id="ai-collect" style="display: block;">
+                    <div class="section-title">
+                         Train Your AI Model
+                    </div>
+                    <div class="section-content">
+                        Step 1: Collect at least 10 data points to train the AI
+                    </div>
+
+                    <div class="data-collection">
+                        <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                            <strong>Data Points Collected: <span id="data-count">0</span>/10</strong>
+                        </div>
+
+                        <div class="section-title" style="font-size: 1rem;">
+                            Adjust All 10 Parameters
+                        </div>
+
+                        <div class="sliders-container" id="ai-sliders"></div>
+
+                        <button class="btn-primary" onclick="addDataPoint()" id="add-data-btn" style="margin-top: 1rem;">
+                             Add Data Point (1/10)
+                        </button>
+
+                        <div class="collected-data" id="collected-data" style="margin-top: 1.5rem;"></div>
+
+                        <button class="btn-secondary" onclick="showAITrainSection()" id="start-train-btn" 
+                                style="margin-top: 1rem; display: none;">
+                             Start Training AI (5 more needed)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI Training Section -->
+                <div id="ai-train" style="display: none;">
+                    <div class="section-title">
+                         Training AI Model
+                    </div>
+                    <div class="section-content">
+                        Step 2: Choose architecture and watch the neural network learn from your data
+                    </div>
+
+                    <div class="training-container">
+                        <!-- Architecture Selection -->
+                        <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin: 1rem 0; border: 2px solid var(--cyan);">
+                            <h3 style="margin-bottom: 1rem;"> Choose Neural Network Architecture</h3>
+                            
+                            <div style="display: grid; gap: 1rem;">
+                                <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer; border: 2px solid transparent;" class="architecture-option" data-arch="simple">
+                                    <input type="radio" name="architecture" value="simple" checked style="width: 20px; height: 20px;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: bold; color: var(--cyan); margin-bottom: 0.25rem;">Simple Network (Faster)</div>
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary);">Architecture: 10 → 16 → 8 → 1</div>
+                                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Best for: Quick training (~30 seconds)</div>
+                                    </div>
+                                </label>
+                                
+                                <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer; border: 2px solid transparent;" class="architecture-option" data-arch="complex">
+                                    <input type="radio" name="architecture" value="complex" style="width: 20px; height: 20px;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: bold; color: var(--purple); margin-bottom: 0.25rem;">Deep Network (More Accurate)</div>
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary);">Architecture: 10 → 32 → 24 → 16 → 8 → 1</div>
+                                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Best for: Better accuracy (~60 seconds)</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button class="btn-primary" onclick="startTrainingWithArchitecture()" style="width: 100%; margin: 1rem 0;">
+                             Start Training with Selected Architecture
+                        </button>
+
+                        <div class="training-progress" id="training-progress-section" style="display: none;">
+                            <h3>Training Progress</h3>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="train-progress" style="width: 0%">0%</div>
+                            </div>
+                            <div style="margin-top: 1rem; color: var(--text-secondary);">
+                                Epoch: <span id="epoch-display">0</span>/500
+                            </div>
+                            <div style="margin-top: 0.5rem; color: var(--text-secondary);">
+                                Loss: <span id="loss-display">0.0000</span>
+                            </div>
+                        </div>
+
+                        <div class="loss-chart" id="loss-chart" style="display: none;">
+                            <h3 style="margin-bottom: 0.5rem;"> Training Loss Over Time</h3>
+                            <canvas id="loss-canvas"></canvas>
+                        </div>
+
+                        <div id="training-complete" style="display: none;">
+                            <div style="background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(168, 85, 247, 0.2)); 
+                                        padding: 1.5rem; border-radius: 0.75rem; margin-top: 2rem; border: 2px solid var(--cyan);">
+                                <h2 style="color: var(--cyan);"> AI Model Ready!</h2>
+                                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                                    Trained on <span id="final-data-count"></span> data points • 
+                                    Architecture: <span id="final-arch-name"></span> •
+                                    Final Loss: <span id="final-loss"></span>
+                                </p>
+                            </div>
+                            <button class="btn-primary" onclick="showAISimulate()" style="margin-top: 1.5rem;">
+                                 Simulate with AI Model
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Simulation Section -->
+                <div id="ai-simulate" style="display: none;">
+                    <div class="section-title">
+                         AI Prediction
+                    </div>
+                    <div class="section-content">
+                        <div style="background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(168, 85, 247, 0.1)); 
+                                    padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--purple); margin-bottom: 1rem;">
+                            <strong> AI Model Ready</strong> - Trained on <span id="ai-data-count"></span> data points
+                        </div>
+                        <p style="color: var(--text-secondary);">
+                            Unlike the ideal formula, your AI model considers <strong>all real-world factors</strong>!
+                        </p>
+                    </div>
+
+                    <div class="sliders-container" id="ai-simulate-sliders"></div>
+
+                    <div style="display: grid; gap: 1rem; margin-top: 2rem;">
+                        <button class="btn-primary" onclick="simulateAI()">
+                             Calculate with AI Model
+                        </button>
+                        <button class="btn-secondary" onclick="showAICollect()">
+                            ← Back to Data Collection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js for 3D simulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- TensorFlow.js for AI -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <!-- Custom Scripts -->
+    <script src="../js/separation-simulation.js"></script>
+    <script src="../js/separation-ai.js"></script>
+    <script src="../js/separation-controls.js"></script>
+</body>
+</html>

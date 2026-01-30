@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Pendulum - Virtual AI Labs</title>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <button class="back-btn" onclick="goBack()">
+            <span>←</span> Back
+        </button>
+        <div class="experiment-title">
+            <span class="icon"></span>
+            <span>Simple Pendulum</span>
+        </div>
+        <div class="formula-display">T = 2π√(L/g)</div>
+    </div>
+
+    <!-- Main Experiment Container -->
+    <div class="experiment-container">
+        <!-- 60% Simulation Panel -->
+        <div class="simulation-panel">
+            <canvas id="simulation-canvas"></canvas>
+            <div class="canvas-controls">
+                 Drag to rotate • Scroll to zoom • Shift+drag to pan
+            </div>
+        </div>
+
+        <!-- 40% Theory/Control Panel -->
+        <div class="theory-panel" id="theory-panel">
+            <!-- Initial Theory View -->
+            <div id="theory-view" class="theory-content">
+                <div class="section-title">
+                     What is this Experiment?
+                </div>
+                <div class="section-content">
+                    A simple pendulum consists of a mass (bob) suspended from a fixed point by a string. 
+                    When displaced from equilibrium and released, it oscillates due to gravitational restoring 
+                    force. The motion is approximately simple harmonic for small angles.
+                </div>
+
+                <div class="section-title">
+                     Key Formula
+                </div>
+                <div class="formula-box">
+                    <div class="formula-equation">T = 2π√(L/g)</div>
+                </div>
+
+                <div class="section-title">
+                     Formula Parameters
+                </div>
+                <div class="formula-params">
+                    <div class="param-item">
+                        <div class="param-symbol">T</div>
+                        <div class="param-name">Time period - time for one complete oscillation</div>
+                        <div class="param-unit">Unit: seconds</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-symbol">L</div>
+                        <div class="param-name">Length of the pendulum string</div>
+                        <div class="param-unit">Unit: meters</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-symbol">g</div>
+                        <div class="param-name">Acceleration due to gravity</div>
+                        <div class="param-unit">Unit: m/s²</div>
+                    </div>
+                </div>
+
+                <div class="section-title">
+                     Key Insight
+                </div>
+                <div class="section-content">
+                    The time period T is <strong>directly proportional to the square root of length L</strong>, 
+                    and <strong>inversely proportional to the square root of gravitational acceleration g</strong>. 
+                    Interestingly, mass has <strong>NO effect</strong> on the period!
+                </div>
+
+                <div class="section-title">
+                     Real-Life Factors (Not in Formula)
+                </div>
+                <div class="section-content">
+                    While the ideal formula only considers length and gravity, real pendulums are affected by:
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Mass of the bob</li>
+                        <li>Air resistance</li>
+                        <li>Medium density</li>
+                        <li>Release angle from vertical</li>
+                        <li>String elasticity</li>
+                        <li>Temperature effects on string length</li>
+                    </ul>
+                </div>
+
+                <div class="funfact-box">
+                    <h3> Fun Fact</h3>
+                    Galileo discovered pendulum laws in 1583 by watching a lamp swing in the 
+                    Pisa Cathedral. He used his pulse to time it! This led to the first accurate 
+                    clocks.
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-primary" onclick="showFormulaMode()">
+                         Play with Formula
+                    </button>
+                    <button class="btn-secondary" onclick="showAIMode()">
+                         Play with AI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formula Mode View -->
+            <div id="formula-view" class="theory-content" style="display: none;">
+                <button class="back-btn" onclick="showTheory()" style="margin-bottom: 1rem;">
+                    ← Back to Theory
+                </button>
+
+                <div class="section-title">
+                     Adjusting Formula
+                </div>
+
+                <div class="sliders-container" id="formula-sliders">
+                    <!-- Formula Parameters -->
+                    <div class="slider-group formula-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge formula">FORMULA</span>
+                                <span>Length (m)</span>
+                            </div>
+                            <span class="slider-value" id="length-value">1.00</span>
+                        </div>
+                        <input type="range" class="slider" id="length-slider" 
+                               min="0.1" max="30" step="0.01" value="1.0" 
+                               oninput="updateSlider('length', this.value)">
+                        <div class="slider-range">
+                            <span>0.1</span>
+                            <span>30.0</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group formula-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge formula">FORMULA</span>
+                                <span>Gravity (m/s²)</span>
+                            </div>
+                            <span class="slider-value" id="gravity-value">9.81</span>
+                        </div>
+                        <input type="range" class="slider" id="gravity-slider" 
+                               min="0.1" max="50" step="0.01" value="9.81" 
+                               oninput="updateSlider('gravity', this.value)">
+                        <div class="slider-range">
+                            <span>0.1</span>
+                            <span>50.0</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group formula-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge formula">FORMULA</span>
+                                <span>Temperature (°C)</span>
+                            </div>
+                            <span class="slider-value" id="temperature-value">25.00</span>
+                        </div>
+                        <input type="range" class="slider" id="temperature-slider" 
+                               min="-50" max="100" step="0.1" value="25" 
+                               oninput="updateSlider('temperature', this.value)">
+                        <div class="slider-range">
+                            <span>-50</span>
+                            <span>100</span>
+                        </div>
+                    </div>
+
+                    <!-- Real-life Parameters (for visual simulation only) -->
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Amplitude (°)</span>
+                            </div>
+                            <span class="slider-value" id="amplitude-value">11.00</span>
+                        </div>
+                        <input type="range" class="slider" id="amplitude-slider" 
+                               min="1" max="85" step="0.1" value="11" 
+                               oninput="updateSlider('amplitude', this.value)">
+                        <div class="slider-range">
+                            <span>1</span>
+                            <span>85</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Mass (kg)</span>
+                            </div>
+                            <span class="slider-value" id="mass-value">0.50</span>
+                        </div>
+                        <input type="range" class="slider" id="mass-slider" 
+                               min="0.01" max="10" step="0.01" value="0.5" 
+                               oninput="updateSlider('mass', this.value)">
+                        <div class="slider-range">
+                            <span>0.01</span>
+                            <span>10.0</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Air Resistance</span>
+                            </div>
+                            <span class="slider-value" id="airResistance-value">0.01</span>
+                        </div>
+                        <input type="range" class="slider" id="airResistance-slider" 
+                               min="0" max="1" step="0.001" value="0.01" 
+                               oninput="updateSlider('airResistance', this.value)">
+                        <div class="slider-range">
+                            <span>0.0</span>
+                            <span>1.0</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Medium Density (kg/m³)</span>
+                            </div>
+                            <span class="slider-value" id="mediumDensity-value">1.23</span>
+                        </div>
+                        <input type="range" class="slider" id="mediumDensity-slider" 
+                               min="0.01" max="20" step="0.01" value="1.23" 
+                               oninput="updateSlider('mediumDensity', this.value)">
+                        <div class="slider-range">
+                            <span>0.01</span>
+                            <span>20.0</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Release Angle (°)</span>
+                            </div>
+                            <span class="slider-value" id="releaseAngle-value">15.00</span>
+                        </div>
+                        <input type="range" class="slider" id="releaseAngle-slider" 
+                               min="1" max="89" step="0.1" value="15" 
+                               oninput="updateSlider('releaseAngle', this.value)">
+                        <div class="slider-range">
+                            <span>1</span>
+                            <span>89</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>String Stiffness (N/m)</span>
+                            </div>
+                            <span class="slider-value" id="stringStiffness-value">1000.00</span>
+                        </div>
+                        <input type="range" class="slider" id="stringStiffness-slider" 
+                               min="10" max="10000" step="10" value="1000" 
+                               oninput="updateSlider('stringStiffness', this.value)">
+                        <div class="slider-range">
+                            <span>10</span>
+                            <span>10000</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group reallife-param">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="param-badge reallife">REAL-LIFE</span>
+                                <span>Oscillation Count</span>
+                            </div>
+                            <span class="slider-value" id="oscillationCount-value">10.00</span>
+                        </div>
+                        <input type="range" class="slider" id="oscillationCount-slider" 
+                               min="1" max="50" step="1" value="10" 
+                               oninput="updateSlider('oscillationCount', this.value)">
+                        <div class="slider-range">
+                            <span>1</span>
+                            <span>50</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-buttons" style="display: grid; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button class="btn-primary" onclick="simulateFormula()" style="width: 100%;">
+                         Simulate with Formula
+                    </button>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                        <button class="btn-secondary" onclick="startSimulation()">
+                             Start
+                        </button>
+                        <button class="btn-secondary" onclick="stopSimulation()">
+                             Stop
+                        </button>
+                        <button class="btn-secondary" onclick="resetSimulation()">
+                             Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Mode View -->
+            <div id="ai-view" class="theory-content" style="display: none;">
+                <button class="back-btn" onclick="showTheory()" style="margin-bottom: 1rem;">
+                    ← Back to Theory
+                </button>
+
+                <div id="ai-collect">
+                    <div class="section-title">
+                         Step 1: Collect Training Data
+                    </div>
+                    <div class="section-content">
+                        Adjust parameters and click "Add Data Point" to collect training examples. 
+                        The AI will learn how ALL 10 parameters affect the pendulum period.
+                        Collect at least <strong>5 data points</strong> to train the model.
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(168, 85, 247, 0.1)); 
+                                padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; border: 1px solid var(--purple);">
+                        <strong>Data Points Collected:</strong> <span id="data-count">0</span> / 5 minimum
+                    </div>
+
+                    <div class="section-title">
+                        Adjust All 10 Parameters
+                    </div>
+
+                    <div class="sliders-container" id="ai-sliders">
+                        <!-- Will be populated by JS -->
+                    </div>
+
+                    <button class="btn-primary" onclick="addDataPoint()" id="add-data-btn" style="margin-top: 1rem;">
+                        Add Data Point (0/5)
+                    </button>
+
+                    <div class="collected-data" id="collected-data" style="margin-top: 1.5rem;">
+                        <!-- Data points will appear here -->
+                    </div>
+
+                    <button class="btn-secondary" onclick="showAITrainSection()" id="start-train-btn" 
+                            style="margin-top: 1rem; display: none;">
+                         Proceed to Training
+                    </button>
+                </div>
+
+                <div id="ai-train" style="display: none;">
+                    <div class="section-title">
+                         Training AI Model
+                    </div>
+                    <div class="section-content">
+                        Step 2: Watch the neural network learn from your data
+                    </div>
+
+                    <div class="training-container">
+                        <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin: 1rem 0;">
+                            <h3>  Choose Neural Network Architecture</h3>
+                            <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+                                <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer; border: 2px solid transparent;" class="architecture-option" data-arch="simple">
+                                    <input type="radio" name="architecture" value="simple" checked style="width: 20px; height: 20px;">
+                                    <div style="flex:1;">
+                                        <div style="font-weight:bold; color:var(--cyan);">Simple Network (Fast)</div>
+                                        <div style="font-size:0.9rem; color:var(--text-secondary);">10 → 16 → 8 → 1</div>
+                                    </div>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer; border: 2px solid transparent;" class="architecture-option" data-arch="complex">
+                                    <input type="radio" name="architecture" value="complex" style="width: 20px; height: 20px;">
+                                    <div style="flex:1;">
+                                        <div style="font-weight:bold; color:var(--purple);">Deep Network (More Accurate)</div>
+                                        <div style="font-size:0.9rem; color:var(--text-secondary);">10 → 32 → 24 → 16 → 8 → 1</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin: 1rem 0;">
+                            <h3> How the Model Learns</h3>
+                            <p style="color: var(--text-secondary); text-align: left; line-height: 1.8;">
+                                The neural network adjusts its internal weights to minimize the difference 
+                                between its predictions and your collected data. Each <strong>epoch</strong> is one complete pass 
+                                through all training data. The <strong>loss</strong> decreases as the model learns the relationship 
+                                between parameters and outcomes.
+                            </p>
+                        </div>
+
+                        <button class="btn-primary" onclick="startTrainingWithArchitecture()" style="width: 100%; margin: 1rem 0;">
+                             Start Training with Selected Architecture
+                        </button>
+
+                        <div class="training-progress" id="training-progress-section" style="display: none;">
+                            <h3>Training Progress</h3>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="train-progress" style="width: 0%">0%</div>
+                            </div>
+                            <div style="margin-top: 1rem; color: var(--text-secondary);">
+                                Epoch: <span id="epoch-display">0</span>/500
+                            </div>
+                            <div style="margin-top: 0.5rem; color: var(--text-secondary);">
+                                Loss: <span id="loss-display">0.0000</span>
+                            </div>
+                        </div>
+
+                        <div class="loss-chart" id="loss-chart" style="display: none;">
+                            <canvas id="loss-canvas"></canvas>
+                        </div>
+
+                        <div id="training-complete" style="display: none;">
+                            <div style="background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(168, 85, 247, 0.2)); 
+                                        padding: 1.5rem; border-radius: 0.75rem; margin-top: 2rem; border: 2px solid var(--cyan);">
+                                <h2 style="color: var(--cyan);"> AI Model Ready!</h2>
+                                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                                    Trained on <span id="final-data-count"></span> data points • 
+                                    Architecture: <span id="final-arch-name"></span> •
+                                    Final Loss: <span id="final-loss"></span>
+                                </p>
+                            </div>
+                            <button class="btn-primary" onclick="showAISimulate()" style="margin-top: 1.5rem;">
+                                 Simulate with AI Model
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ai-simulate" style="display: none;">
+                    <div class="section-title">
+                         AI Prediction (Live)
+                    </div>
+                    <div class="section-content">
+                        <div style="background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(168, 85, 247, 0.1)); 
+                                    padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--purple); margin-bottom: 1rem;">
+                            <strong id="ai-status-banner"> AI Model Ready</strong> - Trained on <span id="ai-data-count"></span> data points • Considers ALL 10 parameters
+                        </div>
+                        <p style="color: var(--text-secondary);">
+                            Unlike the ideal formula, your AI model considers <strong>all real-world factors</strong> 
+                            like air resistance and temperature!
+                        </p>
+                    </div>
+
+                    <div class="sliders-container" id="ai-simulate-sliders">
+                        <!-- Will be populated with all 10 parameters -->
+                    </div>
+
+                    <div style="display: grid; gap: 1rem; margin-top: 2rem;">
+                        <button id="simulate-ai-btn" class="btn-primary" onclick="simulateAI()">
+                             Simulate with AI Model
+                        </button>
+                        <button class="btn-secondary" onclick="showAICollect()">
+                            ← Back to Data Collection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js for 3D simulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- TensorFlow.js for AI -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <!-- Custom Scripts -->
+    <script src="../js/pendulum-simulation.js"></script>
+    <script src="../js/pendulum-ai.js"></script>
+    <script src="../js/pendulum-controls.js"></script>
+</body>
+</html>
