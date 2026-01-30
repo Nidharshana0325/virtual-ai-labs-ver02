@@ -1,7 +1,5 @@
-# Open terminal in the project folder
-python -m http.server 8000
-# Then open: http://localhost:8000
-# 📋 EXPERIMENT TEMPLATE GUIDE
+
+# EXPERIMENT TEMPLATE GUIDE
 
 ## How to Create New Experiments
 
@@ -71,3 +69,7 @@ Before considering the experiment complete:
 - [ ] Fun fact is interesting
 - [ ] Distinction between ideal/real is clear
 - [ ] Students can learn from it
+      
+# How to run? 
+Open terminal in the project folder- python -m http.server 8000
+Then open: http://localhost:8000
